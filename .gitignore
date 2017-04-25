@@ -1,0 +1,8 @@
+.*
+!.gitignore
+!.gitmodules
+*.iml
+node_modules/
+resources/public/hub.html
+resources/public/js/
+target/
