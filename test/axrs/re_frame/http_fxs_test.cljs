@@ -25,7 +25,7 @@
       (is (= "{\"black/knight\":{\"says\":\"None shall pass.\"},\"king/arthur\":{\"questioning/reply\":\"What?\"}}"
              (js->str (clj->jskw m)))))))
 
-(deftest appending-http-result
+(deftest append-result-test
   (testing "It should append the http results to to end of each provided vector"
     (let [d [[:black-knight {:says "None shall pass."}]
              [:king/arthur {:reply "What?"}]]
@@ -33,3 +33,11 @@
           result (axrs.re-frame.http-fxs/append-result expected d)]
       (is (= (conj (first d) expected)) (first result))
       (is (= (conj (second d) expected)) (second result)))))
+
+(deftest http-result-test
+  (testing "Should return a map with dispatch-n key, and multiple fxs to dispatch"
+    (let [result {:king/arthur "I have no quarrel with you, good Sir Knight, but I must cross this bridge."}
+          afters [[:black-knight {:says "None shall pass."}] [:king/arthur {:reply "What?"}]]
+          expected {:dispatch-n [[:black-knight {:says "None shall pass."} result] [:king/arthur {:reply "What?"} result]]}
+          actual (axrs.re-frame.http-fxs/http-result nil [nil afters result])]
+      (is (= expected actual)))))

@@ -42,16 +42,15 @@
   [result afters]
   (mapv #(conj % result) afters))
 
-(reg-event-fx ::http-result
-              (fn [db [_ afters result]]
-                {:dispatch-n (append-result result afters)}))
+(defn http-result [_ [_ afters result]] {:dispatch-n (append-result result afters)})
+(reg-event-fx ::http-result http-result)
 
 (defn json-request
   "Issues a JSON request to a specified URL, sending a provided body and dispatching success or
   error handlers respectively"
   [_ [_ {:keys [type url body after-success after-errors]
-         :or   {type :post body nil after-success [] after-errors [[:http-error]]}
-         :as   request}]]
+         :or   {type :post body nil after-success [] after-errors []}}]]
+
   {:http-xhrio {:method          (keyword type)
                 :uri             url
                 :format          (ajax/json-request-format)
