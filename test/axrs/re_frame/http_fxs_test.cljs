@@ -41,3 +41,24 @@
           expected {:dispatch-n [[:black-knight {:says "None shall pass."} result] [:king/arthur {:reply "What?"} result]]}
           actual (axrs.re-frame.http-fxs/http-result nil [nil afters result])]
       (is (= expected actual)))))
+
+(deftest json-request
+  (testing "Should return a map with :http-xhrio key and necessary properties"
+    (let [m {:type          :get
+             :url           "http://github.com/axrs/re-frame-http-fxs"
+             :after-success [[:this-fx] [:that-fx]]
+             :after-errors  [[:error-fx]]}
+          result (axrs.re-frame.http-fxs/json-request m)]
+      (is (true? (contains? result :http-xhrio)))
+      (is (= :get (get-in result [:http-xhrio :method])))
+      (is (= (:url m) (get-in result [:http-xhrio :uri])))
+      (is (= nil (get-in result [:http-xhrio :params])))
+      (is (= (:after-success m) (first (next (get-in result [:http-xhrio :on-success])))))
+      (is (= (:after-errors m) (first (next (get-in result [:http-xhrio :on-failure])))))))
+
+  (testing "Should return a map with :http-xhrio key and necessary properties [including body]"
+    (let [m {:type :post
+             :body {:king :arthur}}
+          result (axrs.re-frame.http-fxs/json-request m)]
+      (is (= :post (get-in result [:http-xhrio :method])))
+      (is (= (js->str (clj->jskw (:body m))) (js->str (get-in result [:http-xhrio :params])))))))

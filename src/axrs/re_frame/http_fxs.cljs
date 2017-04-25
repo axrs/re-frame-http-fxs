@@ -1,6 +1,7 @@
 (ns axrs.re-frame.http-fxs
   (:require
     [re-frame.core :refer [reg-event-fx debug subscribe dispatch]]
+    [ajax.core :as ajax]
     [clojure.string :as string]))
 
 (declare clj->jskw)
@@ -43,20 +44,18 @@
   (mapv #(conj % result) afters))
 
 (defn http-result [_ [_ afters result]] {:dispatch-n (append-result result afters)})
-(reg-event-fx ::http-result http-result)
+(reg-event-fx ::http-fxs http-result)
 
-(defn json-request
-  "Issues a JSON request to a specified URL, sending a provided body and dispatching success or
-  error handlers respectively"
-  [_ [_ {:keys [type url body after-success after-errors]
-         :or   {type :post body nil after-success [] after-errors []}}]]
-
+(defn- json-request
+  [{:keys [type url body after-success after-errors]
+    :or   {type :post body nil after-success [] after-errors []}
+    :as   request}]
   {:http-xhrio {:method          (keyword type)
                 :uri             url
                 :format          (ajax/json-request-format)
                 :response-format (ajax/json-response-format {:keywords? true})
-                :params          (clj->jskw body)
-                :on-success      [::http-result after-success]
-                :on-failure      [::http-result after-errors]}})
+                :params          (if body (clj->jskw body) nil)
+                :on-success      [::http-fxs after-success]
+                :on-failure      [::http-fxs after-errors]}})
 
-(reg-event-fx :json-request json-request)
+(reg-event-fx :json-request (fn [_ [_ m]] (json-request m)))
